@@ -26,11 +26,25 @@ extern "C" uintptr_t CheckBrokenTwoGlass_ret;
 extern "C" uintptr_t InitThingy_ret;
 extern "C" void* DSL_PreCompute_patch;
 extern "C" void* DSL_BoneCheck_patch;
-extern "C" void* DSL_RotateBeatTimeSet_patch;
-extern "C" void* DSL_RotateBeatTimeSub_patch;
 extern "C" void* DSL_Return_patch;
-extern "C" void* CheckBroken_patch;
-extern "C" void* CheckBrokenTwo_patch;
-extern "C" void* CheckBrokenGlass_patch;
-extern "C" void* CheckBrokenTwoGlass_patch;
-extern "C" void* InitThingy_patch;
+
+extern "C" void* DSL_RotateBeatTimeSet_patch_pre3788;
+extern "C" void* DSL_RotateBeatTimeSet_patch_post3788;
+
+extern "C" void* DSL_RotateBeatTimeSub_patch_pre3788;
+extern "C" void* DSL_RotateBeatTimeSub_patch_post3788;
+
+extern "C" void* CheckBroken_patch_pre3788;
+extern "C" void* CheckBroken_patch_post3788;
+
+extern "C" void* CheckBrokenTwo_patch_pre3788;
+extern "C" void* CheckBrokenTwo_patch_post3788;
+
+extern "C" void* CheckBrokenGlass_patch_pre3788;
+extern "C" void* CheckBrokenGlass_patch_post3788;
+
+extern "C" void* CheckBrokenTwoGlass_patch_pre3788;
+extern "C" void* CheckBrokenTwoGlass_patch_post3788;
+
+extern "C" void* InitThingy_patch_pre3788;
+extern "C" void* InitThingy_patch_post3788;

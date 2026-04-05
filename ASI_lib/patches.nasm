@@ -252,15 +252,27 @@ DSL_BoneCheck_patch:
 
 
 
-GLOBAL DSL_RotateBeatTimeSet_patch
+GLOBAL DSL_RotateBeatTimeSet_patch_post3788
 
-DSL_RotateBeatTimeSet_patch:
+DSL_RotateBeatTimeSet_patch_post3788:
+	mov dword [rax + r8*4 + SirenBuffer.RotatorLastBeatTime], r9d
+	jmp [rel DSL_RotateBeatTimeSet_ret]
+
+GLOBAL DSL_RotateBeatTimeSet_patch_pre3788
+
+DSL_RotateBeatTimeSet_patch_pre3788:
 	mov dword [rax + r11*4 + SirenBuffer.RotatorLastBeatTime], r9d
 	jmp [rel DSL_RotateBeatTimeSet_ret]
 
-GLOBAL DSL_RotateBeatTimeSub_patch
+GLOBAL DSL_RotateBeatTimeSub_patch_post3788
 
-DSL_RotateBeatTimeSub_patch:
+DSL_RotateBeatTimeSub_patch_post3788:
+	sub eax, dword [rcx + rdi*4 + SirenBuffer.RotatorLastBeatTime]
+	jmp [rel DSL_RotateBeatTimeSub_ret]
+
+GLOBAL DSL_RotateBeatTimeSub_patch_pre3788
+
+DSL_RotateBeatTimeSub_patch_pre3788:
 	sub eax, dword [rcx + r11*4 + SirenBuffer.RotatorLastBeatTime]
 	jmp [rel DSL_RotateBeatTimeSub_ret]
 
@@ -273,9 +285,24 @@ DSL_Return_patch:
 	add rsp, 0x20
 	jmp [rel DSL_Return_ret]
 
-GLOBAL CheckBroken_patch
+GLOBAL CheckBroken_patch_post3788
 
-CheckBroken_patch:
+CheckBroken_patch_post3788:
+	push rax
+	sub rsp, 0x28
+	mov rcx, rax
+	call MakeBoneArrays
+	mov rdx, [rsp + 0x28]
+	mov ecx, r15d
+	call CheckSirenBoneArray
+	mov edx, eax
+	add rsp, 0x28
+	pop rax
+	jmp [rel CheckBroken_ret]
+
+GLOBAL CheckBroken_patch_pre3788
+
+CheckBroken_patch_pre3788:
 	push r9
 	sub rsp, 0x28
 	mov rcx, r9
@@ -288,9 +315,23 @@ CheckBroken_patch:
 	pop r9
 	jmp [rel CheckBroken_ret]
 
-GLOBAL CheckBrokenGlass_patch
+GLOBAL CheckBrokenGlass_patch_post3788
 
-CheckBrokenGlass_patch:
+CheckBrokenGlass_patch_post3788:
+	push rax
+	sub rsp, 0x28
+	mov rdx, rax
+	mov ecx, r15d
+	call CheckGlassBoneArray
+	mov edx, eax
+	add rsp, 0x28
+	pop rax
+	mov rcx, [rax + 0x9c0]
+	jmp [rel CheckBrokenGlass_ret]
+
+GLOBAL CheckBrokenGlass_patch_pre3788
+
+CheckBrokenGlass_patch_pre3788:
 	push rcx
 	sub rsp, 0x28
 	mov rdx, r8
@@ -301,9 +342,24 @@ CheckBrokenGlass_patch:
 	pop rcx
 	jmp [rel CheckBrokenGlass_ret]
 
-GLOBAL CheckBrokenTwo_patch
+GLOBAL CheckBrokenTwo_patch_post3788
 
-CheckBrokenTwo_patch:
+CheckBrokenTwo_patch_post3788:
+	push rax
+	sub rsp, 0x28
+	mov rcx, rax
+	call MakeBoneArrays
+	mov rdx, [rsp + 0x28]
+	mov ecx, r15d
+	call CheckSirenBoneArray
+	mov edx, eax
+	add rsp, 0x28
+	pop rax
+	jmp [rel CheckBrokenTwo_ret]
+
+GLOBAL CheckBrokenTwo_patch_pre3788
+
+CheckBrokenTwo_patch_pre3788:
 	push r9
 	sub rsp, 0x28
 	mov rcx, r9
@@ -316,9 +372,23 @@ CheckBrokenTwo_patch:
 	pop r9
 	jmp [rel CheckBrokenTwo_ret]
 
-GLOBAL CheckBrokenTwoGlass_patch
+GLOBAL CheckBrokenTwoGlass_patch_post3788
 
-CheckBrokenTwoGlass_patch:
+CheckBrokenTwoGlass_patch_post3788:
+	push rax
+	sub rsp, 0x28
+	mov rdx, rax
+	mov ecx, r15d
+	call CheckGlassBoneArray
+	mov edx, eax
+	add rsp, 0x28
+	pop rax
+	mov rcx, [rax + 0x9c0]
+	jmp [rel CheckBrokenTwoGlass_ret]
+
+GLOBAL CheckBrokenTwoGlass_patch_pre3788
+
+CheckBrokenTwoGlass_patch_pre3788:
 	push rcx
 	sub rsp, 0x28
 	mov rdx, r8
@@ -329,9 +399,24 @@ CheckBrokenTwoGlass_patch:
 	pop rcx
 	jmp [rel CheckBrokenTwoGlass_ret]
 
-GLOBAL InitThingy_patch
+GLOBAL InitThingy_patch_post3788
 
-InitThingy_patch:
+InitThingy_patch_post3788:
+	push rax
+	sub rsp, 0x28
+	mov rcx, rax
+	call MakeBoneArrays
+	mov rdx, [rsp + 0x28]
+	mov ecx, r14d
+	call CheckSirenBoneArray
+	mov edx, eax
+	add rsp, 0x28
+	pop rax
+	jmp [rel InitThingy_ret]
+
+GLOBAL InitThingy_patch_pre3788
+
+InitThingy_patch_pre3788:
 	push rcx
 	sub rsp, 0x28
 	call MakeBoneArrays

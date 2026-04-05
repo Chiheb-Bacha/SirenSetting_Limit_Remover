@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="HookingLib">
+      <UniqueIdentifier>{f74d76ba-2112-4534-bb3c-88a44706b482}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -34,6 +37,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hooking.h">
+      <Filter>HookingLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -66,5 +75,15 @@
     <ResourceCompile Include="ASI_lib.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="HookingLib.pdb">
+      <Filter>HookingLib</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="HookingLib.lib">
+      <Filter>HookingLib</Filter>
+    </Library>
   </ItemGroup>
 </Project>

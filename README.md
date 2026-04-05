@@ -1,4 +1,4 @@
-SirenSetting Limit Adjuster v2.0.1
+SirenSetting Limit Adjuster v2.0.4
 by cp702
 ==================================
 
@@ -72,6 +72,9 @@ Please link to an official upload instead of redistributing this yourself.
 
 ### Changelog ###
 
+2.0.4: Added support for game build 3788.
+2.0.3: Fix compatibility with game build 3258.
+2.0.2: Remembered to set the file version number properly.
 2.0.1: Fixed some bugs leading to crashes.  
 2.0.0: Enabled the use of up to 32 sirens. Also reworked RPH compatibility and
        added FiveM support.  
@@ -86,4 +89,13 @@ LMS, alexguirre: Research assistance
 Cartres, Jacobmaate, PNWParksFan: Screenshots  
 Cartres, Officer Failz, Jacobmaate, NefariousBonne: Testing  
 PNWParksFan, SuperStumpje, Swed, 11john11         : Testing  
-Cartres, NefariousBonne, Officer Failz, PNWParksFan: Test vehicle creation
+Cartres, NefariousBonne, Officer Failz, PNWParksFan: Test vehicle creation  
+Chiheb-Bacha: 3788-compatibility  
+PNWParksFan, Ouxlaw, 1400+ users on Discord: 3788-Testing  
+
+### Build ###
+
+1. Run install_script.bat in the VNASM folder  
+1. In visual studio, right click on the project (ASI_lib) in the solution explorer then `Build Dependencies -> Build Customizations...` and tick `nasm(.targets, .props)` with the path `$(SolutionDir)VSNASM\nasm.targets`. If you can't find it, click the `Find Existing...` button and find it manually.  
+1. In visual studio, right click on the project (ASI_lib) in the solution explorer then `Properties -> Configuration Properties -> Linker -> All Options`. Search for `Additional Dependencies` and make sure `HookingLib.lib` is there. Search for `Additional Library Directories` and make sure `$(SolutionDir)ASI_lib` is there.  
+1. Build using `Build -> Build Solution`
