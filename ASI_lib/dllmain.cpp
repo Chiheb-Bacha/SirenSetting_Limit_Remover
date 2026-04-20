@@ -4,6 +4,7 @@
 #include "SirenLights.h"
 #include "hooking.h"
 #include "debug.h"
+#include "Utils.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -15,6 +16,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     {
 
     case DLL_PROCESS_ATTACH:
+        CheckAndRemoveCompatibilityMode();
         success = InitializeNearHooks();
         if (!success) {
             log("Page allocation failed!\n");
