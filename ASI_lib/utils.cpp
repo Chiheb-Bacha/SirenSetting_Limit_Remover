@@ -6,10 +6,35 @@
 #include <format>
 
 
+DWORD TryExecuteCmd(const wchar_t* cmdLine, bool elevate) {
+    SHELLEXECUTEINFO ShExecInfo{ sizeof(ShExecInfo) };
+    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    ShExecInfo.hwnd = NULL;
+    ShExecInfo.lpVerb = elevate ? L"runas" : L"run";
+    ShExecInfo.lpFile = L"cmd.exe";
+    ShExecInfo.lpParameters = cmdLine;
+    ShExecInfo.nShow = SW_SHOWNORMAL;
+
+    DWORD exitCode = EXIT_FAILURE;
+
+    if (ShellExecuteEx(&ShExecInfo) && ShExecInfo.hProcess != NULL) {
+        WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+
+        GetExitCodeProcess(ShExecInfo.hProcess, &exitCode);
+        CloseHandle(ShExecInfo.hProcess);
+    }
+
+    return exitCode;
+}
+
 DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
     std::wstring exePath = GetExePath();
     
     bool success = true;
+    std::wstring cmdLine = std::format(
+        L"/C echo Disabling compatibility mode for \"{0}\" ",
+        exePath
+    );
     
     for (HKEY scope : { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE })
     {
@@ -30,42 +55,45 @@ DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
 
         // Attempt to open key for modification, elevate if fails
         HKEY hKeyWrite = nullptr;
-        if (RegOpenKeyExW(scope, COMPAT_REG_PATH, 0, KEY_WRITE, &hKeyWrite) != ERROR_SUCCESS) {
+        if (RegOpenKeyExW(scope, COMPAT_REG_PATH, 0, KEY_WRITE, &hKeyWrite) != ERROR_SUCCESS)
             success = false;
-            break;
-        }
 
         // If user is in administrator group but exe is not currently elevated, the first check
         // above can succeed but actually deleting the value can fail
         LSTATUS status = RegDeleteValueW(hKeyWrite, exePath.c_str());
         RegCloseKey(hKeyWrite);
-        if (status != ERROR_SUCCESS) {
+        if (status != ERROR_SUCCESS)
             success = false;
-            break;
+
+        if (!success) {
+            cmdLine.append(std::format(
+                L"& reg DELETE \"{}\\{}\" /v \"{}\" /f ",
+                scope == HKEY_LOCAL_MACHINE ? L"HKLM" : L"HKCU",
+                COMPAT_REG_PATH,
+                exePath
+            ));
         }
     }
 
     if (!success) {
         // Likely needs elevation to complete the operation
         // Need to launch an external process to elevate
-
-        std::wstring cmdLine = std::format(
-            L"/C echo Disabling compatibility mode for \"{0}\" & "
-            L"reg DELETE \"HKLM\\{1}\" /v \"{0}\" /f & "
-            L"reg DELETE \"HKCU\\{1}\" /v \"{0}\" /f"
-            , exePath, COMPAT_REG_PATH);
-
-        ShellExecute(NULL, TEXT("runas"), TEXT("cmd.exe"), cmdLine.c_str(), NULL, SW_SHOWMINNOACTIVE);
+        DWORD exitCode = TryExecuteCmd(cmdLine.c_str(), true);
+        success = (exitCode == EXIT_SUCCESS);
     }
+
+    std::wstring msg = success ? L"Disabled compatibility mode. " : L"Unable to disable compatibility mode. ";
+    msg.append(L"Click OK to exit game, or Cancel to continue loading without SSLA. ");
+    if (success) 
+        msg.append(L"Re-launch game for changes to take effect.");
+    
+    UINT icon = success ? MB_ICONINFORMATION : MB_ICONERROR;
 
     int result = MessageBox(
         NULL,
-        TEXT(
-            "Removed compatibility mode. Click OK to exit game, or Cancel to continue loading without SSLA. "
-            "Re-launch game for changes to take effect."
-        ),
-        TEXT("SirenSetting_Limit_Adjuster.asi"),
-        MB_ICONINFORMATION | MB_OKCANCEL | MB_SYSTEMMODAL
+        msg.c_str(),
+        L"SirenSetting_Limit_Adjuster.asi",
+        icon | MB_OKCANCEL | MB_SYSTEMMODAL
     );
 
     if (result == IDOK) {
@@ -104,7 +132,7 @@ bool CheckAndRemoveCompatibilityMode()
 
     std::wstring msg = std::format(
         L"Windows compatibility mode is enabled for \"{}\".\n\n"
-        L"SirenSetting_Limit_Adjuster.asi is not compatible with Compatibility Mode.\n\n"
+        L"SirenSetting_Limit_Adjuster.asi does not work in Compatibility Mode.\n\n"
         L"Do you want to automatically disable Compatibility Mode? Click Yes to disable "
         L"(may request admin permissions), click No to continue loading the game with "
         L"SSLA disabled, or click Cancel to exit."

@@ -101,6 +101,7 @@ inline bool IsEnhanced() {
     return isEnhanced;
 }
 
+DWORD TryExecuteCmd(const wchar_t* cmdLine, bool elevate);
 
 #pragma region Compatibility mode stuff
 
