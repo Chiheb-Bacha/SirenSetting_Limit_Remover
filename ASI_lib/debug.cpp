@@ -55,11 +55,11 @@ DWORD WINAPI ExecFixLogFilePermissions(LPVOID lpParam) {
 		if (msgText) {
 			if ((INT_PTR)hInst > 32) {
 				StringCchPrintf(msgText, msgLen, successFmt, logPath);
-				MessageBox(NULL, msgText, TEXT("Log permissions"), MB_OK | MB_ICONINFORMATION);
+				MessageBox(NULL, msgText, TEXT("SirenSetting_Limit_Adjuster.asi"), MB_OK | MB_ICONINFORMATION | MB_SYSTEMMODAL);
 			}
 			else {
 				StringCchPrintf(msgText, msgLen, failFmt, logPath);
-				MessageBox(NULL, msgText, TEXT("Log permissions"), MB_OK | MB_ICONERROR);
+				MessageBox(NULL, msgText, TEXT("SirenSetting_Limit_Adjuster.asi"), MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
 			}
 			LocalFree(msgText);
 		}
@@ -117,8 +117,8 @@ bool setup_log()
 			int result = MessageBox(
 				NULL,
 				msgBoxMessage,
-				TEXT("Error creating sirensettings.log"),
-				MB_ICONWARNING | MB_YESNOCANCEL
+				TEXT("SirenSetting_Limit_Adjuster.asi"),
+				MB_ICONWARNING | MB_YESNOCANCEL | MB_SYSTEMMODAL
 			);
 
 			if (result == IDYES) {
