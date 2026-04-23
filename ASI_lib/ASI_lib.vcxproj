@@ -158,7 +158,7 @@
     <ClInclude Include="SirenSettings_patcher.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RageStructs.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="debug.cpp" />
@@ -171,6 +171,7 @@
     <ClCompile Include="RageStructs.cpp" />
     <ClCompile Include="SirenLights_patcher.cpp" />
     <ClCompile Include="SirenSettings_patcher.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <NASM Include="patches.nasm">
