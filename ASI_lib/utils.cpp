@@ -97,7 +97,7 @@ DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
     );
 
     if (result == IDOK) {
-        ExitProcess(1);
+        TerminateProcess(GetCurrentProcess(), 1);
     }
     
     return 0;
@@ -149,7 +149,7 @@ bool CheckAndRemoveCompatibilityMode()
         CreateThread(NULL, 0, ExecElevRemoveCompatMode, NULL, 0, NULL);
     }
     else if (result == IDCANCEL) {
-        ExitProcess(1);
+        TerminateProcess(GetCurrentProcess(), 1);
     }
 
     return false;
