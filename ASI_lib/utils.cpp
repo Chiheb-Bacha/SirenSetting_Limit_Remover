@@ -35,6 +35,10 @@ DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
         L"/C echo Disabling compatibility mode for \"{0}\" ",
         exePath
     );
+
+    // Note that we must set the value to a dummy value instead of deleting it, or else 
+    // Windows will cache the app compatibility status
+    std::wstring dummyValue = L"NONE";
     
     for (HKEY scope : { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE })
     {
@@ -59,18 +63,27 @@ DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
             success = false;
 
         // If user is in administrator group but exe is not currently elevated, the first check
-        // above can succeed but actually deleting the value can fail
-        LSTATUS status = RegDeleteValueW(hKeyWrite, exePath.c_str());
+        // above can succeed but actually setting the value can fail
+        LSTATUS status = RegSetKeyValueW(
+            hKeyWrite,
+            COMPAT_REG_PATH,
+            exePath.c_str(),
+            REG_SZ,
+            dummyValue.c_str(),
+            (DWORD)sizeof(dummyValue.c_str())
+        );
+
         RegCloseKey(hKeyWrite);
         if (status != ERROR_SUCCESS)
             success = false;
 
         if (!success) {
             cmdLine.append(std::format(
-                L"& reg DELETE \"{}\\{}\" /v \"{}\" /f ",
+                L"& reg ADD \"{}\\{}\" /v \"{}\" /t REG_SZ /d \"{}\" /f ",
                 scope == HKEY_LOCAL_MACHINE ? L"HKLM" : L"HKCU",
                 COMPAT_REG_PATH,
-                exePath
+                exePath,
+                dummyValue
             ));
         }
     }
@@ -105,30 +118,17 @@ DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
 
 bool CheckAndRemoveCompatibilityMode()
 {
-    std::wstring exePath = GetExePath();
-    bool foundAny = false;
-    // bool needsElevation = false;
+    char compatVal[255];
+    DWORD envResult = GetEnvironmentVariableA("__COMPAT_LAYER", compatVal, 255);
 
-    for (HKEY scope : { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE })
-    {
-        HKEY hKey = nullptr;
-
-        // Registry key does not exist, so compatibility mode can't be set
-        if (RegOpenKeyExW(scope, COMPAT_REG_PATH, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
-            continue;
-
-        // Check if there is a value with the name equal to the absolute path of the EXE
-        DWORD type = 0, size = 0;
-        bool found = RegQueryValueExW(hKey, exePath.c_str(), nullptr, &type, nullptr, &size) == ERROR_SUCCESS
-            && type == REG_SZ && size > sizeof(wchar_t);
-        RegCloseKey(hKey);
-
-        if (!found) continue;
-        foundAny = true;
+    if (envResult == 0) {
+        return true;
     }
 
-    // Compatibility mode not set for user or machine, OK to continue
-    if (!foundAny) return true;
+    logDebug(std::format("Detected compatibility mode enabled: \"{}\"\n", compatVal).c_str());
+
+    std::wstring exePath = GetExePath();
+    bool foundReg = false;
 
     std::wstring msg = std::format(
         L"Windows compatibility mode is enabled for \"{}\".\n\n"
