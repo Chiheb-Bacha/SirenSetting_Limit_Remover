@@ -1,5 +1,10 @@
-#include <windows.h>
 #include "pch.h"
+#include <windows.h>
+#include <combaseapi.h>
+#include <shlobj_core.h>
+#include <shlobj.h>
+#include <objbase.h>
+#include <iostream>
 #include "debug.h"
 #include "utils.h"
 #include <string>
@@ -27,92 +32,32 @@ DWORD TryExecuteCmd(const wchar_t* cmdLine, bool elevate) {
     return exitCode;
 }
 
-DWORD WINAPI ExecElevRemoveCompatMode(LPVOID lpParam) {
+void SelectFileInExplorer(const wchar_t* filePath) {
+    // 1. Initialize COM
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    if (FAILED(hr)) return;
+
+    // 2. Create a PIDL for the specific file
+    // ILCreateFromPathW is a helper that converts a path to a PIDL
+    LPITEMIDLIST pidl = ILCreateFromPathW(filePath);
+
+    if (pidl) {
+        // 3. Open folder and select the item
+        // Setting cidl to 0 and apidl to NULL tells the function that 
+        // pidlFolder is the full path to the item to be selected.
+        hr = SHOpenFolderAndSelectItems(pidl, 0, NULL, 0);
+
+        // 4. Free the PIDL
+        ILFree(pidl);
+    }
+
+    CoUninitialize();
+}
+
+DWORD WINAPI ExecSelectGameFile(LPVOID lpParam) {
     std::wstring exePath = GetExePath();
-    
-    bool success = true;
-    std::wstring cmdLine = std::format(
-        L"/C echo Disabling compatibility mode for \"{0}\" ",
-        exePath
-    );
-
-    // Note that we must set the value to a dummy value instead of deleting it, or else 
-    // Windows will cache the app compatibility status
-    std::wstring dummyValue = L"NONE";
-    
-    for (HKEY scope : { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE })
-    {
-        HKEY hKey = nullptr;
-
-        // Registry key does not exist
-        if (RegOpenKeyExW(scope, COMPAT_REG_PATH, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
-            continue;
-
-        // Check if there is a value with the name equal to the absolute path of the EXE
-        DWORD type = 0, size = 0;
-        bool found = RegQueryValueExW(hKey, exePath.c_str(), nullptr, &type, nullptr, &size) == ERROR_SUCCESS
-            && type == REG_SZ && size > sizeof(wchar_t);
-        RegCloseKey(hKey);
-
-        if (!found) 
-            continue;
-
-        // Attempt to open key for modification, elevate if fails
-        HKEY hKeyWrite = nullptr;
-        if (RegOpenKeyExW(scope, COMPAT_REG_PATH, 0, KEY_WRITE, &hKeyWrite) != ERROR_SUCCESS)
-            success = false;
-
-        // If user is in administrator group but exe is not currently elevated, the first check
-        // above can succeed but actually setting the value can fail
-        LSTATUS status = RegSetKeyValueW(
-            hKeyWrite,
-            COMPAT_REG_PATH,
-            exePath.c_str(),
-            REG_SZ,
-            dummyValue.c_str(),
-            (DWORD)sizeof(dummyValue.c_str())
-        );
-
-        RegCloseKey(hKeyWrite);
-        if (status != ERROR_SUCCESS)
-            success = false;
-
-        if (!success) {
-            cmdLine.append(std::format(
-                L"& reg ADD \"{}\\{}\" /v \"{}\" /t REG_SZ /d \"{}\" /f ",
-                scope == HKEY_LOCAL_MACHINE ? L"HKLM" : L"HKCU",
-                COMPAT_REG_PATH,
-                exePath,
-                dummyValue
-            ));
-        }
-    }
-
-    if (!success) {
-        // Likely needs elevation to complete the operation
-        // Need to launch an external process to elevate
-        DWORD exitCode = TryExecuteCmd(cmdLine.c_str(), true);
-        success = (exitCode == EXIT_SUCCESS);
-    }
-
-    std::wstring msg = success ? L"Disabled compatibility mode. " : L"Unable to disable compatibility mode. ";
-    msg.append(L"Click OK to exit game, or Cancel to continue loading without SSLA. ");
-    if (success) 
-        msg.append(L"Re-launch game for changes to take effect.");
-    
-    UINT icon = success ? MB_ICONINFORMATION : MB_ICONERROR;
-
-    int result = MessageBox(
-        NULL,
-        msg.c_str(),
-        L"SirenSetting_Limit_Adjuster.asi",
-        icon | MB_OKCANCEL | MB_SYSTEMMODAL
-    );
-
-    if (result == IDOK) {
-        TerminateProcess(GetCurrentProcess(), 1);
-    }
-    
+    SelectFileInExplorer(exePath.c_str());
+    TerminateProcess(GetCurrentProcess(), 1);
     return 0;
 }
 
@@ -125,31 +70,32 @@ bool CheckAndRemoveCompatibilityMode()
         return true;
     }
 
-    logDebug(std::format("Detected compatibility mode enabled: \"{}\"\n", compatVal).c_str());
+    log(std::format("Detected compatibility mode enabled: \"{}\"\n", compatVal).c_str());
 
     std::wstring exePath = GetExePath();
-    bool foundReg = false;
 
     std::wstring msg = std::format(
         L"Windows compatibility mode is enabled for \"{}\".\n\n"
-        L"SirenSetting_Limit_Adjuster.asi does not work in Compatibility Mode.\n\n"
-        L"Do you want to automatically disable Compatibility Mode? Click Yes to disable "
-        L"(may request admin permissions), click No to continue loading the game with "
-        L"SSLA disabled, or click Cancel to exit."
+        L"SirenSetting_Limit_Adjuster.asi does not work in Compatibility Mode. "
+        L"You must disable compatibility mode or uninstall SSLA.\n\n"
+        L"Follow these steps to disable Compatibility Mode: \n"
+        L"  1) Right-click on the file and select \"Properties\"\n"
+        L"  1) Click to the \"Compatibility\" tab\n"
+        L"  2) Ensure that \"Run this program in compatibility mode\" is unchecked\n"
+        L"  3) Click \"Change settings for all users\" and ensure it is also unchecked\n"
+        L"  4) Click OK on all Properties windows.\n\n\n"
+        L"Click OK to exit the game, or click Cancel to continue loading the game with SSLA disabled."
         , exePath);
 
     int result = MessageBox(
         NULL,
         msg.c_str(),
-        TEXT("SirenSetting_Limit_Adjuster.asi"),
-        MB_ICONWARNING | MB_YESNOCANCEL | MB_SYSTEMMODAL
+        L"SirenSetting_Limit_Adjuster.asi",
+        MB_ICONWARNING | MB_OKCANCEL | MB_SYSTEMMODAL
     );
 
-    if (result == IDYES) {
-        CreateThread(NULL, 0, ExecElevRemoveCompatMode, NULL, 0, NULL);
-    }
-    else if (result == IDCANCEL) {
-        TerminateProcess(GetCurrentProcess(), 1);
+    if (result == IDOK) {
+        CreateThread(NULL, 0, ExecSelectGameFile, NULL, 0, NULL);
     }
 
     return false;

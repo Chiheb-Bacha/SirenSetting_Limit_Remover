@@ -1,12 +1,10 @@
 #include <windows.h>
-#include <shellapi.h>
 #include "pch.h"
 #include "debug.h"
 #include "utils.h"
 #include <cstdarg>
 #include <cstdio>
 #include <strsafe.h>
-#include <cassert>
 #include <string>
 #include <format>
 
