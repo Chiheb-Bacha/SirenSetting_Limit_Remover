@@ -63,14 +63,22 @@ DWORD WINAPI ExecSelectGameFile(LPVOID lpParam) {
 
 bool CheckAndRemoveCompatibilityMode()
 {
-    char compatVal[255];
-    DWORD envResult = GetEnvironmentVariableA("__COMPAT_LAYER", compatVal, 255);
+    char compatValArr[255];
+    DWORD envResult = GetEnvironmentVariableA("__COMPAT_LAYER", compatValArr, 255);
+    std::string compatVal(compatValArr);
 
     if (envResult == 0) {
         return true;
     }
 
-    log(std::format("Detected compatibility mode enabled: \"{}\"\n", compatVal).c_str());
+    log(std::format("Detected compatibility mode environment variable: \"{}\"\n", compatVal).c_str());
+
+    // This environment variable can contain other values like "Installer", "RunAsAdmin", and other
+    // compatibility flags that are not related to the OS level compatibility mode setting which breaks SSLA
+    if (compatVal.find("Vista") == std::string::npos && compatVal.find("Win7") == std::string::npos && compatVal.find("Win8") == std::string::npos) {
+        log("Compatibility flag is not a relevant value, allowing loading to continue but issues may occur\n");
+        return true;
+    }
 
     std::wstring exePath = GetExePath();
 
