@@ -92,33 +92,57 @@ bool setup_log()
 			usedDefaultErrorMessage = true;
 		}
 
-		std::wstring msg = std::format(
-			L"SirenSetting_Limit_Adjuster log creation failed.\n\n"
-			L"Error: {}\n\n"
-			L"To attempt to fix log permissions automatically, click Yes. "
-			L"This will request admin permissions and changes will take effect on the next game start. "
-			L"To continue loading the game with logging disabled, click No. "
-			L"To exit click Cancel.\n\n"
-			L"Log file path: {}"
-		, errorMessage, fullPath);
+		if (errorCode == 0x5) {
+			// Access denied error, try fixing permissions
+			std::wstring msg = std::format(
+				L"SirenSetting_Limit_Adjuster log creation failed.\n\n"
+				L"Error: {}\n\n"
+				L"To attempt to fix log permissions automatically, click Yes. "
+				L"This will request admin permissions and changes will take effect on the next game start. "
+				L"To continue loading the game with logging disabled, click No. "
+				L"To exit click Cancel.\n\n"
+				L"Log file path: {}"
+				, errorMessage, fullPath);
 
-		int result = MessageBox(
-			NULL,
-			msg.c_str(),
-			TEXT("SirenSetting_Limit_Adjuster.asi"),
-			MB_ICONWARNING | MB_YESNOCANCEL | MB_SYSTEMMODAL
-		);
+			int result = MessageBox(
+				NULL,
+				msg.c_str(),
+				TEXT("SirenSetting_Limit_Adjuster.asi"),
+				MB_ICONWARNING | MB_YESNOCANCEL | MB_SYSTEMMODAL
+			);
 
-		if (result == IDYES) {
-			size_t allocChars = pathLen + 1;
-			LPTSTR pathCopy = (LPTSTR)LocalAlloc(LMEM_ZEROINIT, allocChars * sizeof(TCHAR));
-			if (pathCopy) {
-				StringCchCopy(pathCopy, allocChars, fullPath);
-				CreateThread(NULL, 0, ExecFixLogFilePermissions, pathCopy, 0, NULL);
+			if (result == IDYES) {
+				size_t allocChars = pathLen + 1;
+				LPTSTR pathCopy = (LPTSTR)LocalAlloc(LMEM_ZEROINIT, allocChars * sizeof(TCHAR));
+				if (pathCopy) {
+					StringCchCopy(pathCopy, allocChars, fullPath);
+					CreateThread(NULL, 0, ExecFixLogFilePermissions, pathCopy, 0, NULL);
+				}
+			}
+			else if (result == IDCANCEL) {
+				ExitProcess(1);
 			}
 		}
-		else if (result == IDCANCEL) {
-			ExitProcess(1);
+		else {
+			// Other error we are unlikely to be able to fix, just notify the user
+			std::wstring msg = std::format(
+				L"SirenSetting_Limit_Adjuster log creation failed.\n\n"
+				L"Error: {}\n\n"
+				L"To continue loading the game with logging disabled, click OK. "
+				L"To exit click Cancel.\n\n"
+				L"Log file path: {}"
+				, errorMessage, fullPath);
+
+			int result = MessageBox(
+				NULL,
+				msg.c_str(),
+				TEXT("SirenSetting_Limit_Adjuster.asi"),
+				MB_ICONWARNING | MB_OKCANCEL| MB_SYSTEMMODAL
+			);
+
+			if (result == IDCANCEL) {
+				ExitProcess(1);
+			}
 		}
 
 		if (!usedDefaultErrorMessage && errorMessage) LocalFree(errorMessage);
