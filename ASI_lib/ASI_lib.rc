@@ -267,6 +267,14 @@ FX_ASI_BUILD 3788
 BEGIN
 "\000"
 END
+/////////////////////////////////////////////////////////////////////////////
+//
+// 3889
+//
+FX_ASI_BUILD 3889
+BEGIN
+"\000"
+END
 
 
 #endif    // English (United States) resources
